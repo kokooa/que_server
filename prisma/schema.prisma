@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskType {
+  summarize
+  translate
+  image_generate
+}
+
+enum JobStatus {
+  pending
+  processing
+  completed
+  failed
+  cancelled
+}
+
+model Job {
+  id           String    @id @default(uuid()) @db.Uuid
+  taskType     TaskType  @map("task_type")
+  status       JobStatus @default(pending)
+  priority     Int       @default(5)
+  payload      Json
+  result       Json?
+  errorMessage String?   @map("error_message")
+  retryCount   Int       @default(0) @map("retry_count")
+  maxRetries   Int       @default(3) @map("max_retries")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  startedAt    DateTime? @map("started_at")
+  completedAt  DateTime? @map("completed_at")
+
+  @@index([status, priority(sort: Desc), createdAt(sort: Asc)])
+  @@map("jobs")
+}
